@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Token Board" />
+  <meta name="theme-color" content="#EDEDED" />
+  <title>Token Board</title>
+  <link rel="apple-touch-icon" href="assets/splash-icon.png" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app" class="app">
+    <div id="loading-screen" class="loading-screen">
+      <div class="spinner" aria-hidden="true"></div>
+    </div>
+
+    <main id="main-screen" class="main-screen hidden">
+      <header class="top-bar">
+        <button id="settings-btn" class="settings-btn" type="button" aria-label="Parent settings">⚙</button>
+      </header>
+
+      <section class="reinforcer-section">
+        <img id="reinforcer-image" class="reinforcer-image hidden" alt="Reward image" />
+        <div id="reinforcer-placeholder" class="reinforcer-placeholder">
+          <img src="assets/splash-icon.png" alt="" class="placeholder-icon" />
+        </div>
+      </section>
+
+      <section id="stars-row" class="stars-row" aria-label="Star tokens"></section>
+
+      <section id="controls" class="controls"></section>
+    </main>
+
+    <div id="settings-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="modal-sheet">
+        <header class="modal-header">
+          <h2 id="settings-title">Parent Settings</h2>
+          <button id="settings-close" class="done-btn" type="button">Done</button>
+        </header>
+        <div id="settings-body" class="modal-body"></div>
+      </div>
+    </div>
+
+    <div id="celebration" class="celebration hidden" role="dialog" aria-label="Celebration">
+      <div class="celebration-badge">
+        <div class="celebration-check">✓</div>
+        <div class="celebration-title">GOOD JOB!</div>
+        <div class="celebration-subtitle">ALL DONE!</div>
+      </div>
+      <p class="celebration-hint">Tap to continue</p>
+    </div>
+  </div>
+
+  <input id="photo-input" type="file" accept="image/*" capture="environment" class="hidden-input" />
+  <input id="library-input" type="file" accept="image/*" class="hidden-input" />
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
