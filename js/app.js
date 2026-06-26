@@ -62,6 +62,8 @@ const els = {
   settingsClose: document.getElementById('settings-close'),
   celebration: document.getElementById('celebration'),
   celebrationFx: document.getElementById('celebration-fx'),
+  celebrationRewardImage: document.getElementById('celebration-reward-image'),
+  celebrationRewardPlaceholder: document.getElementById('celebration-reward-placeholder'),
   photoInput: document.getElementById('photo-input'),
   libraryInput: document.getElementById('library-input'),
 };
@@ -467,8 +469,24 @@ function spawnCelebrationFx() {
   }
 }
 
+function updateCelebrationRewardImage() {
+  if (!els.celebrationRewardImage || !els.celebrationRewardPlaceholder) {
+    return;
+  }
+
+  if (state.reinforcerUrl) {
+    els.celebrationRewardImage.src = state.reinforcerUrl;
+    els.celebrationRewardImage.classList.remove('hidden');
+    els.celebrationRewardPlaceholder.classList.add('hidden');
+  } else {
+    els.celebrationRewardImage.classList.add('hidden');
+    els.celebrationRewardPlaceholder.classList.remove('hidden');
+  }
+}
+
 function showCelebration() {
   state.showCelebration = true;
+  updateCelebrationRewardImage();
   els.celebration.classList.remove('hidden');
   spawnCelebrationFx();
   playSound(SOUNDS.success);
