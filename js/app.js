@@ -824,7 +824,9 @@ els.settingsModal.addEventListener('click', (event) => {
     closeSettings();
   }
 });
-els.celebration.addEventListener('click', hideCelebration);
+els.celebration.addEventListener('click', () => {
+  resetBoard();
+});
 
 els.photoInput.addEventListener('change', async () => {
   const file = els.photoInput.files?.[0];
