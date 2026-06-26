@@ -60,6 +60,12 @@ const els = {
   settingsModal: document.getElementById('settings-modal'),
   settingsBody: document.getElementById('settings-body'),
   settingsClose: document.getElementById('settings-close'),
+  rewardModal: document.getElementById('reward-modal'),
+  rewardBody: document.getElementById('reward-body'),
+  rewardBack: document.getElementById('reward-back'),
+  rewardDone: document.getElementById('reward-done'),
+  rewardTakePhoto: document.getElementById('reward-take-photo'),
+  rewardChoosePhotos: document.getElementById('reward-choose-photos'),
   celebration: document.getElementById('celebration'),
   celebrationFx: document.getElementById('celebration-fx'),
   celebrationRewardImage: document.getElementById('celebration-reward-image'),
@@ -550,6 +556,162 @@ function openSettings() {
 function closeSettings() {
   els.settingsBtn.classList.remove('active');
   els.settingsModal.classList.add('hidden');
+  closeRewardPicker();
+}
+
+function openRewardPicker() {
+  renderRewardPicker();
+  els.rewardModal.classList.remove('hidden');
+}
+
+function closeRewardPicker() {
+  els.rewardModal.classList.add('hidden');
+  if (!els.settingsModal.classList.contains('hidden')) {
+    renderSettings();
+  }
+}
+
+function renderRewardPicker() {
+  if (!els.rewardBody) {
+    return;
+  }
+
+  els.rewardBody.innerHTML = '';
+
+  const hero = document.createElement('div');
+  hero.className = 'reward-hero';
+
+  const heroLabel = document.createElement('div');
+  heroLabel.className = 'reward-hero-label';
+  heroLabel.textContent = "Today's Reward";
+  hero.appendChild(heroLabel);
+
+  const heroFrame = document.createElement('div');
+  heroFrame.className = 'reward-hero-frame';
+
+  const heroImg = document.createElement('img');
+  heroImg.className = 'reward-hero-image';
+  heroImg.alt = 'Selected reward image';
+  if (state.reinforcerUrl) {
+    heroImg.src = state.reinforcerUrl;
+  } else {
+    heroImg.src = 'assets/splash-icon.png';
+  }
+  heroFrame.appendChild(heroImg);
+  hero.appendChild(heroFrame);
+
+  const heroHint = document.createElement('div');
+  heroHint.className = 'hint';
+  heroHint.textContent = 'Tap a saved reward below, or add a new photo.';
+  hero.appendChild(heroHint);
+
+  els.rewardBody.appendChild(hero);
+
+  const gridTitle = document.createElement('div');
+  gridTitle.className = 'section-title';
+  gridTitle.textContent = 'Saved Rewards';
+  els.rewardBody.appendChild(gridTitle);
+
+  if (state.reinforcerLibrary.items.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'reward-empty';
+    empty.textContent = 'No saved rewards yet. Use the buttons below to add one.';
+    els.rewardBody.appendChild(empty);
+    return;
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'reward-grid';
+
+  state.reinforcerLibrary.items.forEach((item) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'reward-grid-item';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `reward-grid-thumb${state.reinforcerLibrary.selectedId === item.id ? ' selected' : ''}`;
+
+    const img = document.createElement('img');
+    hydrateReinforcerUrl(item.id).then((url) => {
+      if (url) {
+        img.src = url;
+      }
+    });
+    img.alt = 'Saved reward';
+    button.appendChild(img);
+
+    button.addEventListener('click', async () => {
+      state.reinforcerLibrary = await selectReinforcer(item.id);
+      state.reinforcerUrl = await hydrateReinforcerUrl(item.id);
+      renderReinforcer();
+      renderRewardPicker();
+    });
+
+    wrapper.appendChild(button);
+
+    if (state.reinforcerLibrary.selectedId === item.id) {
+      const badge = document.createElement('div');
+      badge.className = 'reward-grid-badge';
+      badge.textContent = '✓';
+      wrapper.appendChild(badge);
+    }
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'reward-grid-delete';
+    del.textContent = '×';
+    del.addEventListener('click', async (event) => {
+      event.stopPropagation();
+      if (!window.confirm('Remove this image from your saved rewards?')) {
+        return;
+      }
+      state.reinforcerLibrary = await removeReinforcer(item.id);
+      state.reinforcerUrl = state.reinforcerLibrary.selectedId
+        ? await hydrateReinforcerUrl(state.reinforcerLibrary.selectedId)
+        : null;
+      renderReinforcer();
+      renderRewardPicker();
+    });
+    wrapper.appendChild(del);
+    grid.appendChild(wrapper);
+  });
+
+  els.rewardBody.appendChild(grid);
+}
+
+function appendRewardSettingsSummary() {
+  const title = document.createElement('div');
+  title.className = 'section-title';
+  title.textContent = 'Reward Image';
+  els.settingsBody.appendChild(title);
+
+  const summary = document.createElement('button');
+  summary.type = 'button';
+  summary.className = 'reward-settings-card';
+
+  const preview = document.createElement('div');
+  preview.className = 'reward-settings-preview';
+  const img = document.createElement('img');
+  img.alt = 'Current reward';
+  img.src = state.reinforcerUrl || 'assets/splash-icon.png';
+  preview.appendChild(img);
+
+  const copy = document.createElement('div');
+  copy.className = 'reward-settings-copy';
+  copy.innerHTML = `
+    <div class="reward-settings-title">Choose Reward Image</div>
+    <div class="hint">Open full-screen library to pick or add photos</div>
+  `;
+
+  const arrow = document.createElement('div');
+  arrow.className = 'reward-settings-arrow';
+  arrow.textContent = '›';
+
+  summary.appendChild(preview);
+  summary.appendChild(copy);
+  summary.appendChild(arrow);
+  summary.addEventListener('click', openRewardPicker);
+  els.settingsBody.appendChild(summary);
 }
 
 function renderSettings() {
@@ -557,100 +719,7 @@ function renderSettings() {
   const intervalUnitLabel = getIntervalUnit(draft) === 'sec' ? 'seconds' : 'minutes';
   els.settingsBody.innerHTML = '';
 
-  const title = document.createElement('div');
-  title.className = 'section-title';
-  title.textContent = 'Reward Image';
-  els.settingsBody.appendChild(title);
-
-  const hint = document.createElement('div');
-  hint.className = 'hint';
-  hint.textContent = 'Pick a saved reward, or add a new one with camera / photos.';
-  els.settingsBody.appendChild(hint);
-
-  if (state.reinforcerLibrary.items.length > 0) {
-    const rewards = document.createElement('div');
-    rewards.className = 'saved-rewards';
-
-    state.reinforcerLibrary.items.forEach((item) => {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'saved-item';
-
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = `saved-thumb${state.reinforcerLibrary.selectedId === item.id ? ' selected' : ''}`;
-
-      const img = document.createElement('img');
-      hydrateReinforcerUrl(item.id).then((url) => {
-        if (url) {
-          img.src = url;
-        }
-      });
-      button.appendChild(img);
-
-      button.addEventListener('click', async () => {
-        state.reinforcerLibrary = await selectReinforcer(item.id);
-        state.reinforcerUrl = await hydrateReinforcerUrl(item.id);
-        renderReinforcer();
-        renderSettings();
-      });
-
-      if (state.reinforcerLibrary.selectedId === item.id) {
-        const badge = document.createElement('div');
-        badge.className = 'saved-badge';
-        badge.textContent = '✓';
-        wrapper.appendChild(button);
-        wrapper.appendChild(badge);
-      } else {
-        wrapper.appendChild(button);
-      }
-
-      const del = document.createElement('button');
-      del.type = 'button';
-      del.className = 'saved-delete';
-      del.textContent = '×';
-      del.addEventListener('click', async (event) => {
-        event.stopPropagation();
-        if (!window.confirm('Remove this image from your saved rewards?')) {
-          return;
-        }
-        state.reinforcerLibrary = await removeReinforcer(item.id);
-        state.reinforcerUrl = state.reinforcerLibrary.selectedId
-          ? await hydrateReinforcerUrl(state.reinforcerLibrary.selectedId)
-          : null;
-        renderReinforcer();
-        renderSettings();
-      });
-      wrapper.appendChild(del);
-      rewards.appendChild(wrapper);
-    });
-
-    els.settingsBody.appendChild(rewards);
-  } else {
-    const empty = document.createElement('div');
-    empty.className = 'hint';
-    empty.style.fontStyle = 'italic';
-    empty.textContent = 'No saved rewards yet. Take a photo or choose from photos to add one.';
-    els.settingsBody.appendChild(empty);
-  }
-
-  const row = document.createElement('div');
-  row.className = 'row';
-
-  const takePhoto = document.createElement('button');
-  takePhoto.type = 'button';
-  takePhoto.className = 'config-btn';
-  takePhoto.textContent = 'Take Photo';
-  takePhoto.addEventListener('click', () => els.photoInput.click());
-
-  const choosePhotos = document.createElement('button');
-  choosePhotos.type = 'button';
-  choosePhotos.className = 'config-btn';
-  choosePhotos.textContent = 'Choose from Photos';
-  choosePhotos.addEventListener('click', () => els.libraryInput.click());
-
-  row.appendChild(takePhoto);
-  row.appendChild(choosePhotos);
-  els.settingsBody.appendChild(row);
+  appendRewardSettingsSummary();
 
   appendStarCountSettings(draft);
   appendThinningSettings(draft, intervalUnitLabel);
@@ -835,7 +904,9 @@ async function handleImageFile(file) {
   state.reinforcerLibrary = library;
   state.reinforcerUrl = url;
   renderReinforcer();
-  if (!els.settingsModal.classList.contains('hidden')) {
+  if (!els.rewardModal.classList.contains('hidden')) {
+    renderRewardPicker();
+  } else if (!els.settingsModal.classList.contains('hidden')) {
     renderSettings();
   }
 }
@@ -847,6 +918,15 @@ els.settingsModal.addEventListener('click', (event) => {
     closeSettings();
   }
 });
+els.rewardBack.addEventListener('click', closeRewardPicker);
+els.rewardDone.addEventListener('click', closeRewardPicker);
+els.rewardModal.addEventListener('click', (event) => {
+  if (event.target === els.rewardModal) {
+    closeRewardPicker();
+  }
+});
+els.rewardTakePhoto.addEventListener('click', () => els.photoInput.click());
+els.rewardChoosePhotos.addEventListener('click', () => els.libraryInput.click());
 let celebrationDismissLock = false;
 
 function handleCelebrationDismiss(event) {

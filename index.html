@@ -55,6 +55,21 @@
       </div>
     </div>
 
+    <div id="reward-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="reward-title">
+      <div class="modal-sheet reward-sheet">
+        <header class="modal-header">
+          <button id="reward-back" class="back-btn" type="button">← Back</button>
+          <h2 id="reward-title">Reward Image</h2>
+          <button id="reward-done" class="done-btn" type="button">Done</button>
+        </header>
+        <div id="reward-body" class="modal-body reward-body"></div>
+        <div class="reward-actions">
+          <button id="reward-take-photo" class="config-btn" type="button">Take Photo</button>
+          <button id="reward-choose-photos" class="config-btn" type="button">Choose from Photos</button>
+        </div>
+      </div>
+    </div>
+
     <div id="celebration" class="celebration hidden" role="dialog" aria-label="Celebration">
       <div id="celebration-fx" class="celebration-fx" aria-hidden="true"></div>
       <div class="celebration-stars" aria-hidden="true">
@@ -83,6 +98,6 @@
   <input id="photo-input" type="file" accept="image/*" capture="environment" class="hidden-input" />
   <input id="library-input" type="file" accept="image/*" class="hidden-input" />
 
-  <script type="module" src="js/app.js?v=4"></script>
+  <script type="module" src="js/app.js?v=5"></script>
 </body>
 </html>
