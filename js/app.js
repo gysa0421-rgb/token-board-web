@@ -359,6 +359,7 @@ async function awardStar() {
   handleEarnedCountChange();
   await timer.initialize();
   renderStars();
+  renderControls();
 }
 
 async function deductStar() {
@@ -373,6 +374,7 @@ async function deductStar() {
   handleEarnedCountChange();
   await timer.initialize();
   renderStars();
+  renderControls();
 }
 
 function handleEarnedCountChange() {
