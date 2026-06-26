@@ -31,7 +31,18 @@
 
       <section id="stars-row" class="stars-row" aria-label="Star tokens"></section>
 
-      <section id="controls" class="controls"></section>
+      <section id="controls" class="controls">
+        <div id="lock-row-host"></div>
+        <div id="buttons-wrap" class="buttons-wrap locked">
+          <div id="button-blocker" class="button-blocker" hidden></div>
+          <div id="unlocked-actions" class="unlocked-actions" hidden>
+            <button id="lock-again-btn" class="text-btn" type="button">🔒 Lock Again</button>
+            <button id="reset-board-btn" class="action-btn reset-board" type="button">Reset Board</button>
+          </div>
+          <button id="award-star-btn" class="action-btn award is-disabled" type="button" aria-disabled="true">+1 Star</button>
+          <button id="deduct-star-btn" class="action-btn deduct is-disabled" type="button" aria-disabled="true">-1 Star</button>
+        </div>
+      </section>
     </main>
 
     <div id="settings-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">

@@ -49,6 +49,14 @@ const els = {
   reinforcerPlaceholder: document.getElementById('reinforcer-placeholder'),
   starsRow: document.getElementById('stars-row'),
   controls: document.getElementById('controls'),
+  lockRowHost: document.getElementById('lock-row-host'),
+  buttonsWrap: document.getElementById('buttons-wrap'),
+  buttonBlocker: document.getElementById('button-blocker'),
+  unlockedActions: document.getElementById('unlocked-actions'),
+  lockAgainBtn: document.getElementById('lock-again-btn'),
+  resetBoardBtn: document.getElementById('reset-board-btn'),
+  awardStarBtn: document.getElementById('award-star-btn'),
+  deductStarBtn: document.getElementById('deduct-star-btn'),
   settingsModal: document.getElementById('settings-modal'),
   settingsBody: document.getElementById('settings-body'),
   settingsClose: document.getElementById('settings-close'),
@@ -65,6 +73,8 @@ let tapCount = 0;
 let tapTimer = null;
 let autoLockTimer = null;
 let celebrationTimer = null;
+let starActionInFlight = false;
+let controlsInitialized = false;
 
 const timer = createStarTimer({
   getSettings: () => state.settings,
@@ -233,20 +243,55 @@ function registerLockTap() {
   }, TRIPLE_TAP_WINDOW_MS);
 }
 
-function renderControls() {
-  const { earnedCount, isControlsUnlocked } = state;
-  const totalStars = state.settings.totalStars;
-  els.controls.innerHTML = '';
+function isAwardAllowed() {
+  return (
+    state.isControlsUnlocked &&
+    state.earnedCount < state.settings.totalStars
+  );
+}
 
+function isDeductAllowed() {
+  return state.isControlsUnlocked && state.earnedCount > 0;
+}
+
+function setActionButtonState(button, allowed) {
+  if (!button) {
+    return;
+  }
+
+  button.classList.toggle('is-disabled', !allowed);
+  button.setAttribute('aria-disabled', String(!allowed));
+}
+
+function updateStarButtons() {
+  setActionButtonState(els.awardStarBtn, isAwardAllowed());
+  setActionButtonState(els.deductStarBtn, isDeductAllowed());
+}
+
+function updateControlsLockState() {
+  const { isControlsUnlocked } = state;
+
+  els.buttonsWrap.classList.toggle('locked', !isControlsUnlocked);
+  els.buttonBlocker.hidden = isControlsUnlocked;
+  els.unlockedActions.hidden = !isControlsUnlocked;
+  updateStarButtons();
+}
+
+function renderLockRow() {
+  if (!els.lockRowHost) {
+    return;
+  }
+
+  els.lockRowHost.innerHTML = '';
   const lockRow = document.createElement('div');
   lockRow.className = 'lock-row';
 
   const lockBtn = document.createElement('button');
   lockBtn.type = 'button';
-  lockBtn.className = `lock-btn${isControlsUnlocked ? ' unlocked' : ''}`;
-  lockBtn.textContent = isControlsUnlocked ? '🔓' : '🔒';
+  lockBtn.className = `lock-btn${state.isControlsUnlocked ? ' unlocked' : ''}`;
+  lockBtn.textContent = state.isControlsUnlocked ? '🔓' : '🔒';
   lockBtn.addEventListener('click', () => {
-    if (isControlsUnlocked) {
+    if (state.isControlsUnlocked) {
       lockControls();
     } else {
       registerLockTap();
@@ -254,7 +299,7 @@ function renderControls() {
   });
   lockRow.appendChild(lockBtn);
 
-  if (!isControlsUnlocked) {
+  if (!state.isControlsUnlocked) {
     const hint = document.createElement('div');
     hint.className = 'lock-hint';
     hint.textContent = 'Hold here with 2 fingers for 2 sec, or tap the lock 3 times';
@@ -269,7 +314,7 @@ function renderControls() {
     lockRow.appendChild(progress);
 
     lockRow.addEventListener('touchstart', (event) => {
-      if (isControlsUnlocked) {
+      if (state.isControlsUnlocked) {
         return;
       }
       if (event.touches.length >= 2 && !holdStart) {
@@ -286,7 +331,7 @@ function renderControls() {
     }, { passive: true });
 
     const endHold = () => {
-      if (!isControlsUnlocked) {
+      if (!state.isControlsUnlocked) {
         clearHoldTimer();
         fill.style.width = '0';
       }
@@ -295,87 +340,93 @@ function renderControls() {
     lockRow.addEventListener('touchcancel', endHold);
   }
 
-  els.controls.appendChild(lockRow);
+  els.lockRowHost.appendChild(lockRow);
+}
 
-  const buttonsWrap = document.createElement('div');
-  buttonsWrap.className = `buttons-wrap${isControlsUnlocked ? '' : ' locked'}`;
-
-  if (!isControlsUnlocked) {
-    const blocker = document.createElement('div');
-    blocker.className = 'button-blocker';
-    buttonsWrap.appendChild(blocker);
+function setupControls() {
+  if (controlsInitialized) {
+    return;
   }
 
-  if (isControlsUnlocked) {
-    const lockAgain = document.createElement('button');
-    lockAgain.type = 'button';
-    lockAgain.className = 'text-btn';
-    lockAgain.textContent = '🔒 Lock Again';
-    lockAgain.addEventListener('click', lockControls);
-    buttonsWrap.appendChild(lockAgain);
-
-    const resetBoard = document.createElement('button');
-    resetBoard.type = 'button';
-    resetBoard.className = 'action-btn reset-board';
-    resetBoard.textContent = 'Reset Board';
-    resetBoard.addEventListener('click', confirmResetBoard);
-    buttonsWrap.appendChild(resetBoard);
-  }
-
-  const awardBtn = document.createElement('button');
-  awardBtn.type = 'button';
-  awardBtn.className = 'action-btn award';
-  awardBtn.textContent = '+1 Star';
-  awardBtn.disabled = !isControlsUnlocked || earnedCount >= totalStars;
-  awardBtn.addEventListener('click', () => {
+  els.lockAgainBtn?.addEventListener('click', lockControls);
+  els.resetBoardBtn?.addEventListener('click', confirmResetBoard);
+  els.awardStarBtn?.addEventListener('click', () => {
+    if (!isAwardAllowed() || starActionInFlight) {
+      return;
+    }
     resetAutoLockTimer();
     awardStar();
   });
-  buttonsWrap.appendChild(awardBtn);
-
-  const deductBtn = document.createElement('button');
-  deductBtn.type = 'button';
-  deductBtn.className = 'action-btn deduct';
-  deductBtn.textContent = '-1 Star';
-  deductBtn.disabled = !isControlsUnlocked || earnedCount <= 0;
-  deductBtn.addEventListener('click', () => {
+  els.deductStarBtn?.addEventListener('click', () => {
+    if (!isDeductAllowed() || starActionInFlight) {
+      return;
+    }
     resetAutoLockTimer();
     deductStar();
   });
-  buttonsWrap.appendChild(deductBtn);
 
-  els.controls.appendChild(buttonsWrap);
+  controlsInitialized = true;
+}
+
+function renderControls() {
+  setupControls();
+  renderLockRow();
+  updateControlsLockState();
 }
 
 async function awardStar() {
+  if (!isAwardAllowed() || starActionInFlight) {
+    return;
+  }
+
   const totalStars = state.settings.totalStars;
   const nextCount = Math.min(state.earnedCount + 1, totalStars);
   if (nextCount === state.earnedCount) {
     return;
   }
 
+  starActionInFlight = true;
   playSound(SOUNDS.starAdd);
   state.earnedCount = nextCount;
   saveEarnedCount(nextCount);
+  updateStarButtons();
   handleEarnedCountChange();
-  await timer.initialize();
   renderStars();
-  renderControls();
+
+  try {
+    await timer.initialize();
+    renderStars();
+  } finally {
+    starActionInFlight = false;
+    updateStarButtons();
+  }
 }
 
 async function deductStar() {
+  if (!isDeductAllowed() || starActionInFlight) {
+    return;
+  }
+
   const nextCount = Math.max(state.earnedCount - 1, 0);
   if (nextCount === state.earnedCount) {
     return;
   }
 
+  starActionInFlight = true;
   playSound(SOUNDS.starRemove);
   state.earnedCount = nextCount;
   saveEarnedCount(nextCount);
+  updateStarButtons();
   handleEarnedCountChange();
-  await timer.initialize();
   renderStars();
-  renderControls();
+
+  try {
+    await timer.initialize();
+    renderStars();
+  } finally {
+    starActionInFlight = false;
+    updateStarButtons();
+  }
 }
 
 function handleEarnedCountChange() {

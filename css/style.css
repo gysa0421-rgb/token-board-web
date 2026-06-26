@@ -264,6 +264,12 @@ input {
   position: relative;
 }
 
+.unlocked-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .buttons-wrap.locked {
   opacity: 0.55;
 }
@@ -273,7 +279,15 @@ input {
   inset: 0;
   background: rgba(228, 228, 228, 0.35);
   border-radius: 14px;
-  z-index: 1;
+  z-index: 5;
+}
+
+.button-blocker[hidden] {
+  display: none;
+}
+
+.unlocked-actions[hidden] {
+  display: none;
 }
 
 .text-btn {
@@ -293,6 +307,8 @@ input {
   font-weight: 600;
   color: #fff;
   cursor: pointer;
+  position: relative;
+  z-index: 1;
 }
 
 .action-btn.award {
@@ -309,8 +325,10 @@ input {
   border: 2px solid #b8a9a9;
 }
 
-.action-btn:disabled {
+.action-btn:disabled,
+.action-btn.is-disabled {
   opacity: 0.45;
+  pointer-events: none;
   cursor: default;
 }
 
