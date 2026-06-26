@@ -74,7 +74,6 @@ let holdStart = null;
 let tapCount = 0;
 let tapTimer = null;
 let autoLockTimer = null;
-let celebrationTimer = null;
 let starActionInFlight = false;
 let controlsInitialized = false;
 
@@ -491,10 +490,6 @@ function showCelebration() {
   spawnCelebrationFx();
   playSound(SOUNDS.success);
   playSound(SOUNDS.starAdd);
-  if (celebrationTimer) {
-    clearTimeout(celebrationTimer);
-  }
-  celebrationTimer = setTimeout(hideCelebration, 5000);
 }
 
 function hideCelebration() {
@@ -502,10 +497,6 @@ function hideCelebration() {
   els.celebration.classList.add('hidden');
   if (els.celebrationFx) {
     els.celebrationFx.innerHTML = '';
-  }
-  if (celebrationTimer) {
-    clearTimeout(celebrationTimer);
-    celebrationTimer = null;
   }
 }
 
