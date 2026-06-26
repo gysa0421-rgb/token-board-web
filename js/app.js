@@ -500,7 +500,30 @@ function hideCelebration() {
   }
 }
 
+async function dismissCelebrationAndReset() {
+  if (!state.showCelebration) {
+    return;
+  }
+
+  hideCelebration();
+  state.earnedCount = 0;
+  previousEarnedCount = 0;
+  saveEarnedCount(0);
+  lockControls();
+  updateStarButtons();
+  renderStars();
+
+  await timer.clearTimer();
+  await timer.initialize();
+  renderAll();
+}
+
 async function resetBoard() {
+  if (state.showCelebration) {
+    await dismissCelebrationAndReset();
+    return;
+  }
+
   await timer.clearTimer();
   state.earnedCount = 0;
   saveEarnedCount(0);
@@ -824,9 +847,22 @@ els.settingsModal.addEventListener('click', (event) => {
     closeSettings();
   }
 });
-els.celebration.addEventListener('click', () => {
-  resetBoard();
-});
+let celebrationDismissLock = false;
+
+function handleCelebrationDismiss(event) {
+  if (!state.showCelebration || celebrationDismissLock) {
+    return;
+  }
+
+  event.preventDefault();
+  celebrationDismissLock = true;
+  dismissCelebrationAndReset().finally(() => {
+    celebrationDismissLock = false;
+  });
+}
+
+els.celebration.addEventListener('touchend', handleCelebrationDismiss, { passive: false });
+els.celebration.addEventListener('click', handleCelebrationDismiss);
 
 els.photoInput.addEventListener('change', async () => {
   const file = els.photoInput.files?.[0];
