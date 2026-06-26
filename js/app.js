@@ -53,6 +53,7 @@ const els = {
   settingsBody: document.getElementById('settings-body'),
   settingsClose: document.getElementById('settings-close'),
   celebration: document.getElementById('celebration'),
+  celebrationFx: document.getElementById('celebration-fx'),
   photoInput: document.getElementById('photo-input'),
   libraryInput: document.getElementById('library-input'),
 };
@@ -392,19 +393,47 @@ function handleEarnedCountChange() {
   previousEarnedCount = state.earnedCount;
 }
 
+const CONFETTI_COLORS = [
+  '#E8C547', '#7FAF8A', '#8A9BA8', '#D4A5A5', '#A8C5E8', '#C9B8E0', '#F0C987',
+];
+
+function spawnCelebrationFx() {
+  if (!els.celebrationFx) {
+    return;
+  }
+
+  els.celebrationFx.innerHTML = '';
+  for (let i = 0; i < 52; i += 1) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.backgroundColor = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+    piece.style.animationDuration = `${2.2 + Math.random() * 1.8}s`;
+    piece.style.animationDelay = `${Math.random() * 0.45}s`;
+    piece.style.width = `${7 + Math.random() * 9}px`;
+    piece.style.height = `${5 + Math.random() * 6}px`;
+    els.celebrationFx.appendChild(piece);
+  }
+}
+
 function showCelebration() {
   state.showCelebration = true;
   els.celebration.classList.remove('hidden');
+  spawnCelebrationFx();
   playSound(SOUNDS.success);
+  playSound(SOUNDS.starAdd);
   if (celebrationTimer) {
     clearTimeout(celebrationTimer);
   }
-  celebrationTimer = setTimeout(hideCelebration, 4500);
+  celebrationTimer = setTimeout(hideCelebration, 5000);
 }
 
 function hideCelebration() {
   state.showCelebration = false;
   els.celebration.classList.add('hidden');
+  if (els.celebrationFx) {
+    els.celebrationFx.innerHTML = '';
+  }
   if (celebrationTimer) {
     clearTimeout(celebrationTimer);
     celebrationTimer = null;
