@@ -506,35 +506,21 @@ function hideCelebration() {
   }
 }
 
-async function dismissCelebrationAndReset() {
+function dismissCelebration() {
   if (!state.showCelebration) {
     return;
   }
 
   hideCelebration();
-  state.earnedCount = 0;
-  previousEarnedCount = 0;
-  saveEarnedCount(0);
-  lockControls();
-  updateStarButtons();
-  renderStars();
-
-  await timer.clearTimer();
-  await timer.initialize();
-  renderAll();
 }
 
 async function resetBoard() {
-  if (state.showCelebration) {
-    await dismissCelebrationAndReset();
-    return;
-  }
+  hideCelebration();
 
   await timer.clearTimer();
   state.earnedCount = 0;
   saveEarnedCount(0);
   previousEarnedCount = 0;
-  hideCelebration();
   lockControls();
   await timer.initialize();
   renderAll();
@@ -936,9 +922,8 @@ function handleCelebrationDismiss(event) {
 
   event.preventDefault();
   celebrationDismissLock = true;
-  dismissCelebrationAndReset().finally(() => {
-    celebrationDismissLock = false;
-  });
+  dismissCelebration();
+  celebrationDismissLock = false;
 }
 
 els.celebration.addEventListener('touchend', handleCelebrationDismiss, { passive: false });
